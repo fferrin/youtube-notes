@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
   chrome.storage.local.get({[videoIdText]: {}}, function (result) {
     const notesInVideo = result[videoIdText] ?? {};
 
-    var ulElement = document.getElementById("ytAnnotations");
+    var ulElement = document.getElementById("ytNotes");
 
     for (var timestamp in notesInVideo) {
       var liElement = document.createElement("li");
