@@ -54,12 +54,12 @@ const getTitle = () => {
   const currentTime = Math.floor(document.querySelector("video").currentTime);
   const totalTime = Math.floor(document.querySelector("video").duration);
 
-  console.log("title = " + title);
-  console.log("currentTime = " + currentTime);
-  console.log("urlParams");
-  console.log(" - video ID = " + videoId);
-  console.log(" - channelName = " + channelName);
-  console.log(" - channelAlias = " + channelAlias);
+  // console.log("title = " + title);
+  // console.log("currentTime = " + currentTime);
+  // console.log("urlParams");
+  // console.log(" - video ID = " + videoId);
+  // console.log(" - channelName = " + channelName);
+  // console.log(" - channelAlias = " + channelAlias);
   return {
     title,
     currentTime,
@@ -73,6 +73,13 @@ const getTitle = () => {
 function seekTo(seconds) {
   // document.getElementById("movie_player").seekTo(seconds);
   document.getElementsByTagName("video")[0].currentTime = seconds;
+}
+
+async function removeNoteFromStorage(videoId, timestamp) {
+  const notes = await chrome.storage.local.get([videoId]);
+  delete notes[videoId][timestamp];
+  await chrome.storage.local.set({ [videoId]: notes[videoId] });
+  chrome.runtime.sendMessage({ action: "noteDeleted" });
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -97,8 +104,30 @@ document.addEventListener("DOMContentLoaded", function () {
     for (var timestamp in notesInVideo) {
       const li = document.createElement("li");
       const a = document.createElement("a");
+      const textBetween = document.createElement("span");
+      const editButton = document.createElement("button");
+      const deleteButton = document.createElement("button");
+
       a.href = "#";
       a.textContent = formatTime(timestamp);
+
+      textBetween.textContent = notesInVideo[timestamp];
+
+      // Edit button
+      editButton.textContent = "Edit";
+      editButton.addEventListener("click", function () {
+        console.log(`Edit clicked for: ${timestamp}`);
+      });
+
+      // Delete button
+      deleteButton.textContent = "Delete";
+      (function (timestamp) {
+        deleteButton.addEventListener("click", function () {
+          console.log(`Delete clicked for: ${timestamp}`);
+          removeNoteFromStorage(videoIdText, timestamp);
+          li.remove();
+        });
+      })(timestamp);
 
       (function (timestamp) {
         a.addEventListener("click", function (event) {
@@ -119,9 +148,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       })(timestamp);
 
-      li.textContent = `: ${notesInVideo[timestamp]}`;
+      li.appendChild(a);
+      li.appendChild(textBetween);
+      li.appendChild(editButton);
+      li.appendChild(deleteButton);
 
-      li.insertBefore(a, li.firstChild);
       ulElement.appendChild(li);
     }
   });
