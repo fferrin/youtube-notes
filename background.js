@@ -15,30 +15,14 @@ function debug(message, value) {
 const youtube = "https://www.youtube.com/watch";
 
 // Chrome APIs
-function getCurrentTabUrl() {
-  return new Promise((resolve, reject) => {
-    try {
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        const url = tabs && tabs.length > 0 ? tabs[0].url : null;
-        resolve(url);
-      });
-    } catch (e) {
-      reject(e);
-    }
-  });
+async function getCurrentTabUrl() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  return tabs && tabs.length > 0 ? tabs[0].url : null;
 }
 
-function getFromStorage(key) {
-  return new Promise((resolve, reject) => {
-    try {
-      chrome.storage.local.get(key, function (result) {
-        const value = result[key] ?? {};
-        resolve(value);
-      });
-    } catch (e) {
-      reject(e);
-    }
-  });
+async function getFromStorage(key) {
+  const value = await chrome.storage.local.get(key)
+  return value ?? {};
 }
 
 // Helpers
