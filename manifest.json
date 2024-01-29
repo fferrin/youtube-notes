@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Annotations",
+  "description": "Annotate YouTube videos and paste them into your preferred tool or keep them saved locally in your browser.",
+  "version": "1.3",
+  "icons": {
+    "16": "images/icon-16.png",
+    "32": "images/icon-32.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "yt-annotations/popup.html",
+    "default_icon": {
+      "16": "images/icon-16.png",
+      "32": "images/icon-32.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    }
+  },
+  "permissions": ["tabs", "activeTab", "scripting", "storage"],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Y",
+        "mac": "Command+Y"
+      }
+    }
+  }
+}
