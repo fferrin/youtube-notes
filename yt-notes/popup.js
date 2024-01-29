@@ -1,3 +1,19 @@
+// Debug
+function getCurrentTime() {
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, "0");
+  const minutes = now.getMinutes().toString().padStart(2, "0");
+  const seconds = now.getSeconds().toString().padStart(2, "0");
+
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function debug(message, value) {
+  value = JSON.stringify(value, null, 2);
+  message = JSON.stringify(message, null, 2);
+  console.error(getCurrentTime() + " | " + message + " : " + value);
+}
+
 const stringifyObject = (obj) => JSON.stringify(obj, null, 2);
 
 function formatNumber(value) {
@@ -54,9 +70,12 @@ const getTitle = () => {
   };
 };
 
+function seekTo(seconds) {
+  // document.getElementById("movie_player").seekTo(seconds);
+  document.getElementsByTagName("video")[0].currentTime = seconds;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-  console.error("Setting badge");
-  chrome.runtime.sendMessage({ action: "setBadge", text: "123" });
   const saveButton = document.getElementById("ytSaveButton");
   const note = document.getElementById("ytNote");
   const title = document.getElementById("ytTitle");
@@ -70,22 +89,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // TODO: Ver esto
   // chrome.storage.local.get([videoIdText], function (result) {
-  chrome.storage.local.get({[videoIdText]: {}}, function (result) {
+  chrome.storage.local.get({ [videoIdText]: {} }, function (result) {
     const notesInVideo = result[videoIdText] ?? {};
 
     var ulElement = document.getElementById("ytNotes");
 
     for (var timestamp in notesInVideo) {
-      var liElement = document.createElement("li");
-      liElement.textContent =
-        formatTime(timestamp) + ": " + notesInVideo[timestamp];
-      ulElement.appendChild(liElement);
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = "#";
+      a.textContent = formatTime(timestamp);
+
+      (function (timestamp) {
+        a.addEventListener("click", function (event) {
+          event.preventDefault();
+
+          chrome.tabs.query(
+            { active: true, currentWindow: true },
+            function (tabs) {
+              var currentTab = tabs[0];
+
+              chrome.scripting.executeScript({
+                target: { tabId: currentTab.id },
+                func: seekTo,
+                args: [timestamp],
+              });
+            }
+          );
+        });
+      })(timestamp);
+
+      li.textContent = `: ${notesInVideo[timestamp]}`;
+
+      li.insertBefore(a, li.firstChild);
+      ulElement.appendChild(li);
     }
   });
 
   // TODO: Ver esto
   // chrome.storage.local.get([videoIdText], function (result) {
-  chrome.storage.local.get({[videoIdText]: {}}, function (result) {
+  chrome.storage.local.get({ [videoIdText]: {} }, function (result) {
     console.log(
       "List para ver si esta el tiempo",
       stringifyObject({ result, time: currentTime.innerText })
@@ -154,6 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
         [videoIdText]: notesInVideo,
       });
     });
+    chrome.runtime.sendMessage({ action: "noteUpdated" });
   });
 
   // Set variables in tags

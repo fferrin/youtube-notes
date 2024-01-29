@@ -9,6 +9,7 @@ function getCurrentTime() {
 }
 
 function debug(message, value) {
+  value = JSON.stringify(value, null, 2)
   console.error(getCurrentTime() + " | " + message + " : " + value);
 }
 
@@ -22,7 +23,7 @@ async function getCurrentTabUrl() {
 
 async function getFromStorage(key) {
   const value = await chrome.storage.local.get(key)
-  return value ?? {};
+  return value[key] ?? {};
 }
 
 // Helpers
@@ -44,12 +45,24 @@ async function updateBadgeForUrl() {
   setBadge(badge);
 }
 
+function messageReceivedEvent(message) {
+  switch(message.action) {
+    case "noteCreated":
+    case "noteUpdated":
+    case "noteDeleted":
+      debug("EVENT RECEIVED")
+      updateBadgeForUrl()
+  }
+}
+
+function handleSeek(seconds) {
+  document.getElementById("movie_player").seekTo(seconds)
+}
+
 chrome.tabs.onUpdated.addListener(updateBadgeForUrl);
 chrome.tabs.onActivated.addListener(updateBadgeForUrl);
+chrome.runtime.onMessage.addListener(messageReceivedEvent);
 
 function setBadge(text) {
-  if (typeof text !== "string") {
-    text = String(text);
-  }
-  chrome.action.setBadgeText({ text });
+  chrome.action.setBadgeText({ text: String(text) });
 }
