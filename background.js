@@ -9,7 +9,7 @@ function getCurrentTime() {
 }
 
 function debug(message, value) {
-  value = JSON.stringify(value, null, 2)
+  value = JSON.stringify(value, null, 2);
   console.error(getCurrentTime() + " | " + message + " : " + value);
 }
 
@@ -17,12 +17,12 @@ const youtube = "https://www.youtube.com/watch";
 
 // Chrome APIs
 async function getCurrentTabUrl() {
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   return tabs && tabs.length > 0 ? tabs[0].url : null;
 }
 
 async function getFromStorage(key) {
-  const value = await chrome.storage.local.get(key)
+  const value = await chrome.storage.local.get(key);
   return value[key] ?? {};
 }
 
@@ -46,17 +46,25 @@ async function updateBadgeForUrl() {
 }
 
 function messageReceivedEvent(message) {
-  switch(message.action) {
+  switch (message.action) {
     case "noteCreated":
     case "noteUpdated":
     case "noteDeleted":
-      debug("EVENT RECEIVED")
-      updateBadgeForUrl()
+      updateBadgeForUrl();
+      break;
+    case "ytPageUpdated":
+      chrome.runtime.sendMessage({
+        msg: "ytPageUpdated",
+        data: {
+          subject: "Loading",
+          content: getCurrentTime() + ": Just completed!",
+        },
+      });
   }
 }
 
 function handleSeek(seconds) {
-  document.getElementById("movie_player").seekTo(seconds)
+  document.getElementById("movie_player").seekTo(seconds);
 }
 
 chrome.tabs.onUpdated.addListener(updateBadgeForUrl);

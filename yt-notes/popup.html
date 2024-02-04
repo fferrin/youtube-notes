@@ -5,23 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>URL Printer</title>
     <h1>YouTube Notes!</h1>
-    <script src="popup.js"></script>
   </head>
   <body>
-    Title: <span id="ytTitle"></span>
-    <br />
-    VideoId: <span id="ytVideoId"></span>
-    <br />
-    URL: <span id="ytUrl"></span>
-    <br />
-    Channel: <span id="ytChannelName"></span> (@<span id="ytChannelAlias"></span
-    >)
-    <br />
-    Time: <span id="ytCurrentTime"></span> / <span id="ytTotalTime"></span>
+    <div class="flex items-center space-x-4">
+      <img
+        id="ytImg"
+        alt="Video thumbnail"
+        class="thumbnail"
+        height="80"
+        width="80"
+      />
+      <div class="info-container">
+        <h2 class="title">
+          <span id="ytTitle"></span>
+        </h2>
+        <div class="upload-info">
+          Title: <span id="ytTitle"></span>
+          <br />
+          VideoId: <span id="ytVideoId"></span>
+          <br />
+          URL: <span id="ytUrl"></span>
+          <br />
+          Channel: <span id="ytChannelName"></span> (<span
+            id="ytChannelAlias"
+          ></span
+          >)
+          <br />
+          Time: <span id="ytCurrentTime"></span> /
+          <span id="ytTotalTime"></span>
+        </div>
+      </div>
+    </div>
     <textarea id="ytNote" rows="4" cols="50"></textarea>
 
     <button id="ytSaveButton">Save</button>
+    <button id="testDispatch">Dispatch</button>
 
     <ul id="ytNotes"></ul>
+    <ul id="ytNotes2"></ul>
+    <script src="popup.js"></script>
   </body>
 </html>
