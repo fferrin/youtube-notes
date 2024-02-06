@@ -1,5 +1,3 @@
-
-// Debug
 function getCurrentTime() {
   const now = new Date();
   const hours = now.getHours().toString().padStart(2, "0");
@@ -12,4 +10,8 @@ function getCurrentTime() {
 function debug(message, value) {
   value = JSON.stringify(value, null, 2);
   console.error(getCurrentTime() + " | " + message + " : " + value);
+}
+
+function stringifyObject(obj) {
+  JSON.stringify(obj, null, 2);
 }

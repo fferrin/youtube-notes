@@ -1,21 +1,3 @@
-// Debug
-function getCurrentTime() {
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, "0");
-  const minutes = now.getMinutes().toString().padStart(2, "0");
-  const seconds = now.getSeconds().toString().padStart(2, "0");
-
-  return `${hours}:${minutes}:${seconds}`;
-}
-
-function debug(message, value) {
-  value = JSON.stringify(value, null, 2);
-  message = JSON.stringify(message, null, 2);
-  console.error(getCurrentTime() + " | " + message + " : " + value);
-}
-
-const stringifyObject = (obj) => JSON.stringify(obj, null, 2);
-
 function formatNumber(value) {
   return value.toString().padStart(2, "0");
 }
@@ -36,35 +18,27 @@ function formatTime(seconds) {
   }
 }
 
-const getTitle = () => {
-  const titleObj = document.querySelector('meta[name="title"]');
-
-  const title = titleObj ? titleObj.getAttribute("content") : "No Title";
+const getVideoInfoFromPage = () => {
+  const imgSrc = document.querySelector("ytd-video-owner-renderer yt-img-shadow#avatar img#img").src
+  const title = document.querySelector("#above-the-fold div#title yt-formatted-string").textContent
   const channelName = document
-    .querySelector('span[itemprop="author"] link[itemprop="name"]')
-    .getAttribute("content");
+    .querySelector("#top-row #text")
+    .getAttribute("title");
   const channelAlias = document
-    .querySelector('span[itemprop="author"] link[itemprop="url"]')
+    .querySelector("#top-row #text a")
     .getAttribute("href")
-    .split("@")
+    .split("/")
     .at(-1);
-  const videoId = document
-    .querySelector('meta[itemprop="identifier"]')
-    .getAttribute("content");
+  const videoId = document.querySelector("ytd-page-manager#page-manager ytd-watch-flexy").getAttribute("video-id")
   const currentTime = Math.floor(document.querySelector("video").currentTime);
   const totalTime = Math.floor(document.querySelector("video").duration);
 
-  // console.log("title = " + title);
-  // console.log("currentTime = " + currentTime);
-  // console.log("urlParams");
-  // console.log(" - video ID = " + videoId);
-  // console.log(" - channelName = " + channelName);
-  // console.log(" - channelAlias = " + channelAlias);
   return {
     title,
     currentTime,
     totalTime,
     videoId,
+    imgSrc,
     channelName,
     channelAlias,
   };
@@ -82,7 +56,136 @@ async function removeNoteFromStorage(videoId, timestamp) {
   chrome.runtime.sendMessage({ action: "noteDeleted" });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+async function updateNotes(videoId) {
+  chrome.storage.local.get({ [videoId]: {} }, function (result) {
+    const notesInVideo = result[videoId] ?? {};
+
+    var ulElement = document.getElementById("ytNotes");
+    ulElement.innerHTML = "";
+
+    for (var timestamp in notesInVideo) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      const textBetween = document.createElement("span");
+      const deleteButton = document.createElement("button");
+
+      a.href = "#";
+      a.textContent = formatTime(timestamp);
+
+      textBetween.textContent = notesInVideo[timestamp];
+
+      // Delete button
+      deleteButton.textContent = "Delete";
+      (function (timestamp) {
+        deleteButton.addEventListener("click", function () {
+          console.log(`Delete clicked for: ${timestamp}`);
+          removeNoteFromStorage(videoId, timestamp);
+          li.remove();
+        });
+      })(timestamp);
+
+      (function (timestamp) {
+        a.addEventListener("click", function (event) {
+          event.preventDefault();
+
+          chrome.tabs.query(
+            { active: true, currentWindow: true },
+            function (tabs) {
+              var currentTab = tabs[0];
+
+              chrome.scripting.executeScript({
+                target: { tabId: currentTab.id },
+                func: seekTo,
+                args: [timestamp],
+              });
+            }
+          );
+          note.value = notesInVideo[timestamp];
+        });
+      })(timestamp);
+
+      li.appendChild(a);
+      li.appendChild(textBetween);
+      li.appendChild(deleteButton);
+
+      ulElement.appendChild(li);
+    }
+  });
+}
+
+function messageReceivedEvent(message) {
+  switch (message.action) {
+    case "ytNavigateFinish":
+      console.error("ytNavigateFinish en el popup");
+      console.error(JSON.parse(message.data));
+  }
+}
+chrome.runtime.onMessage.addListener(messageReceivedEvent);
+
+async function getVideoInfo() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const currentTab = tabs[0];
+
+  chrome.scripting.executeScript(
+    {
+      target: { tabId: currentTab.id },
+      func: getVideoInfoFromPage,
+    },
+    (result) => {
+      const r = result[0].result;
+      document.getElementById("ytTitle").innerText = r.title;
+      document.getElementById("ytUrl").innerText = currentTab.url;
+      document.getElementById("ytCurrentTime").innerText = r.currentTime;
+      document.getElementById("ytTotalTime").innerText = r.totalTime;
+      document.getElementById("ytChannelAlias").innerText = r.channelAlias;
+      document.getElementById("ytChannelName").innerText = r.channelName;
+      document.getElementById("ytVideoId").innerText = r.videoId;
+      document.getElementById("ytImg").src = r.imgSrc;
+
+      window.localStorage.setItem("ytTitle", r.title);
+      window.localStorage.setItem("ytUrl", currentTab.url);
+      window.localStorage.setItem("ytCurrentTime", r.currentTime);
+      window.localStorage.setItem("ytTotalTime", r.totalTime);
+      window.localStorage.setItem("ytChannelAlias", r.channelAlias);
+      window.localStorage.setItem("ytChannelName", r.channelName);
+      window.localStorage.setItem("ytVideoId", r.videoId);
+    }
+  );
+}
+
+document.addEventListener("yt-navigate-finish", function () {
+  // Handle the event when the page navigation finishes
+  console.error("NEW VIDEO PAGE LOADED. FETCH NEW TAG INFORMATION HERE.");
+  getVideoInfo();
+  let counter = window.localStorage.getItem("counter") ?? 0;
+  window.localStorage.setItem("counter", counter + 1);
+
+  // Your logic to fetch and process the new video tags
+  // ...
+});
+
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.msg === "ytPageUpdated") {
+    //  To do something
+    console.log(request.data.subject);
+    console.log(request.data.content);
+    window.localStorage.setItem("MENSAJE", request.data.content);
+  }
+});
+
+async function sendMessageToContentScript(message) {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const activeTab = tabs[0];
+  chrome.tabs.sendMessage(activeTab.id, {
+    type: "popup-to-content",
+    message: message,
+  });
+}
+
+document.addEventListener("DOMContentLoaded", async function () {
+  console.warn("POR ENVIAR MENSAJE AL SCRIPT");
+  await sendMessageToContentScript("PASAME LOS DATOS");
+  console.warn("MENSAJE ENVIADO");
   const saveButton = document.getElementById("ytSaveButton");
   const note = document.getElementById("ytNote");
   const title = document.getElementById("ytTitle");
@@ -93,6 +196,27 @@ document.addEventListener("DOMContentLoaded", function () {
   const currentTime = document.getElementById("ytCurrentTime");
 
   const videoIdText = window.localStorage.getItem("ytVideoId");
+  function dispatchNotesUpdatedEvent(videoIdParam) {
+    const event = new CustomEvent("notesUpdated", { detail: { videoIdParam } });
+    document.dispatchEvent(event);
+  }
+
+  // Function to handle the custom event and update the content of the "escucha" div
+  function handleNotesUpdatedEvent(event) {
+    const notes = document.getElementById("ytNotes2");
+    const videoIdParam = event.detail.videoIdParam;
+    notes.textContent =
+      'Event "createdAhora" received at ' +
+      new Date().toLocaleTimeString() +
+      ". VideoID: " +
+      videoIdParam;
+  }
+
+  // Add event listeners
+  saveButton.addEventListener("click", () => dispatchNotesUpdatedEvent(123));
+  console.error("NOTES2", document.getElementById("ytNotes2"));
+  // document.getElementById("ytNotes2").addEventListener("notesUpdated", handleNotesUpdatedEvent);
+  document.addEventListener("notesUpdated", handleNotesUpdatedEvent);
 
   // TODO: Ver esto
   // chrome.storage.local.get([videoIdText], function (result) {
@@ -100,24 +224,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const notesInVideo = result[videoIdText] ?? {};
 
     var ulElement = document.getElementById("ytNotes");
+    ulElement.innerHTML = "";
 
     for (var timestamp in notesInVideo) {
       const li = document.createElement("li");
       const a = document.createElement("a");
       const textBetween = document.createElement("span");
-      const editButton = document.createElement("button");
       const deleteButton = document.createElement("button");
 
       a.href = "#";
       a.textContent = formatTime(timestamp);
 
       textBetween.textContent = notesInVideo[timestamp];
-
-      // Edit button
-      editButton.textContent = "Edit";
-      editButton.addEventListener("click", function () {
-        console.log(`Edit clicked for: ${timestamp}`);
-      });
 
       // Delete button
       deleteButton.textContent = "Delete";
@@ -145,12 +263,12 @@ document.addEventListener("DOMContentLoaded", function () {
               });
             }
           );
+          note.value = notesInVideo[timestamp];
         });
       })(timestamp);
 
       li.appendChild(a);
       li.appendChild(textBetween);
-      li.appendChild(editButton);
       li.appendChild(deleteButton);
 
       ulElement.appendChild(li);
@@ -160,46 +278,16 @@ document.addEventListener("DOMContentLoaded", function () {
   // TODO: Ver esto
   // chrome.storage.local.get([videoIdText], function (result) {
   chrome.storage.local.get({ [videoIdText]: {} }, function (result) {
-    console.log(
-      "List para ver si esta el tiempo",
-      stringifyObject({ result, time: currentTime.innerText })
-    );
     const timee = window.localStorage.getItem("ytCurrentTime");
-    console.error(timee);
-    console.error("Todos:", stringifyObject(result[videoIdText]));
-    console.error("tiempo:", stringifyObject({ timee }));
-    console.error("Time:", result[videoIdText][timee]);
     note.value = result[videoIdText][timee] ?? "";
-    // console.error(document.getElementById("ytCurrentTime").innerText);
-    // const notesInVideo = result[videoIdText] ?? {};
-    // notesInVideo[currentTimeText] = note.value;
+    // console.error(document.getelementbyid("ytcurrenttime").innertext);
+    // const notesinvideo = result[videoidtext] ?? {};
+    // notesinvideo[currenttimetext] = note.value;
     // chrome.storage.local.set({
-    //   [videoIdText]: notesInVideo,
+    //   [videoidtext]: notesinvideo,
     // });
   });
 
-  // [x] Listar todas las anotaciones del video
-  // [ ] Listar todas las anotaciones de todos los videos del canal
-  // [ ] Listar todas las anotaciones de todos los videos de todos los canales
-  // {
-  //  channels: {
-  //    channelAlias1: channelName1,
-  //    channelAlias2: channelName2,
-  //    ...
-  //  },
-  //  channelAlias1: {
-  //    videoId1: videoName1,
-  //    videoId2: videoName2,
-  //    ...
-  //  }
-  //
-  // {
-  //  videoId: {
-  //    currentTime1: note1
-  //    currentTime2: note2
-  //    ...
-  //  }
-  // }
   saveButton.addEventListener("click", function () {
     const channelAliasText = channelAlias.innerText;
     const channelNameText = channelName.innerText;
@@ -216,7 +304,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Save videoId in channel alias
     chrome.storage.local.get([channelAliasText], function (result) {
       const videosInChannel = result[channelAliasText] ?? {};
-      videosInChannel[videoId.innerText] = 0;
+      videosInChannel[videoId.innerText] =
+        window.localStorage.getItem("ytTitle");
       chrome.storage.local.set({ [channelAliasText]: videosInChannel });
     });
 
@@ -227,6 +316,7 @@ document.addEventListener("DOMContentLoaded", function () {
       chrome.storage.local.set({
         [videoIdText]: notesInVideo,
       });
+      updateNotes(videoIdText);
     });
     chrome.runtime.sendMessage({ action: "noteUpdated" });
   });
@@ -238,7 +328,7 @@ document.addEventListener("DOMContentLoaded", function () {
     chrome.scripting.executeScript(
       {
         target: { tabId: currentTab.id },
-        func: getTitle,
+        func: getVideoInfoFromPage,
       },
       (result) => {
         const r = result[0].result;
@@ -249,6 +339,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("ytChannelAlias").innerText = r.channelAlias;
         document.getElementById("ytChannelName").innerText = r.channelName;
         document.getElementById("ytVideoId").innerText = r.videoId;
+        document.getElementById("ytImg").src = r.imgSrc;
 
         window.localStorage.setItem("ytTitle", r.title);
         window.localStorage.setItem("ytUrl", currentTab.url);
