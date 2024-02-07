@@ -1,14 +1,12 @@
 const getVideoInfoFromPage = () => {
-  // console.warn("IMAGES")
-  // console.warn(document.querySelectorAll("ytd-video-owner-renderer"))
-  // console.warn(document.querySelectorAll("ytd-video-owner-renderer yt-img-shadow#avatar"))
-  // console.warn(document.querySelectorAll("ytd-video-owner-renderer yt-img-shadow#avatar img#img"))
-  const imgSrc = document.querySelector(
-    "ytd-video-owner-renderer yt-img-shadow#avatar img#img"
-  )?.src;
+  const imgSrc =
+    document.querySelector(
+      "ytd-video-owner-renderer yt-img-shadow#avatar img#img"
+    )?.src ||
+    "https://es.wikipedia.org/wiki/YouTube#/media/Archivo:YouTube_social_white_square_(2017).svg";
   const title = document.querySelector(
     "#above-the-fold div#title yt-formatted-string"
-  ).textContent;
+  )?.textContent;
   const channelName = document
     .querySelector("#top-row #text")
     .getAttribute("title");
@@ -22,21 +20,26 @@ const getVideoInfoFromPage = () => {
     .getAttribute("video-id");
   const currentTime = Math.floor(document.querySelector("video").currentTime);
   const totalTime = Math.floor(document.querySelector("video").duration);
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
   return {
-    title,
+    channelAlias,
+    channelName,
     currentTime,
+    imgSrc,
+    title,
     totalTime,
     videoId,
-    imgSrc,
-    channelName,
-    channelAlias,
+    videoUrl,
   };
 };
 
 // Function to send a message to the extension code
 function sendMessageToExtension(eventType, data) {
-  console.info("Mensaje a la extension", { eventType, data: JSON.parse(data) });
+  console.info("Mensaje a la extension", document.readyState, {
+    eventType,
+    data: JSON.parse(data),
+  });
   chrome.runtime.sendMessage({ action: eventType, data });
 }
 
@@ -50,7 +53,7 @@ function sendMessageToExtension(eventType, data) {
 document.onreadystatechange = () => {
   if (document.readyState === "complete") {
     console.error("document.readyState.complete");
-    console.error(getVideoInfoFromPage())
+    console.error(getVideoInfoFromPage());
     afterDOMLoaded();
   }
 };
@@ -76,18 +79,36 @@ async function afterDOMLoaded() {
   //   );
   // });
 
-  console.error("Document state", document.readyState)
+  console.info("Document state", document.readyState);
   document.addEventListener("yt-navigate-start", function () {
-    console.error("yt-navigate-start");
-    console.error(getVideoInfoFromPage())
-  })
-  
-  document.addEventListener("yt-navigate-finish", function () {
-    console.error("yt-navigate-finish");
-    console.error(getVideoInfoFromPage())
-  })
+    console.info("yt-navigate-start");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  window.addEventListener("yt-navigate-finish", function () {
+    console.info("yt-navigate-finish");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  window.addEventListener("yt-navigate-cache", function () {
+    console.info("yt-navigate-cache");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
   document.addEventListener("yt-page-data-updated", function () {
-    console.error("yt-page-data-updated");
+    console.info("yt-page-data-updated");
     sendMessageToExtension(
       "ytNavigateFinish",
       JSON.stringify(getVideoInfoFromPage())

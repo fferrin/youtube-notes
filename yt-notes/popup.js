@@ -18,32 +18,6 @@ function formatTime(seconds) {
   }
 }
 
-const getVideoInfoFromPage = () => {
-  const imgSrc = document.querySelector("ytd-video-owner-renderer yt-img-shadow#avatar img#img").src
-  const title = document.querySelector("#above-the-fold div#title yt-formatted-string").textContent
-  const channelName = document
-    .querySelector("#top-row #text")
-    .getAttribute("title");
-  const channelAlias = document
-    .querySelector("#top-row #text a")
-    .getAttribute("href")
-    .split("/")
-    .at(-1);
-  const videoId = document.querySelector("ytd-page-manager#page-manager ytd-watch-flexy").getAttribute("video-id")
-  const currentTime = Math.floor(document.querySelector("video").currentTime);
-  const totalTime = Math.floor(document.querySelector("video").duration);
-
-  return {
-    title,
-    currentTime,
-    totalTime,
-    videoId,
-    imgSrc,
-    channelName,
-    channelAlias,
-  };
-};
-
 function seekTo(seconds) {
   // document.getElementById("movie_player").seekTo(seconds);
   document.getElementsByTagName("video")[0].currentTime = seconds;
@@ -114,55 +88,23 @@ async function updateNotes(videoId) {
 }
 
 function messageReceivedEvent(message) {
+  console.error("messageReceivedEvent");
+  console.error("MENSAJE RECIBIDO", { action: message.action });
   switch (message.action) {
     case "ytNavigateFinish":
-      console.error("ytNavigateFinish en el popup");
-      console.error(JSON.parse(message.data));
+    case "ytPageUpdated":
+      const data = JSON.parse(message.data);
+      window.localStorage.clear()
+      window.localStorage.setItem("ytTitle", data.title);
+      window.localStorage.setItem("ytVideoUrl", data.videoUrl);
+      window.localStorage.setItem("ytImageUrl", data.imgSrc);
+      window.localStorage.setItem("ytTotalTime", data.totalTime);
+      window.localStorage.setItem("ytChannelAlias", data.channelAlias);
+      window.localStorage.setItem("ytChannelName", data.channelName);
+      window.localStorage.setItem("ytVideoId", data.videoId);
   }
 }
 chrome.runtime.onMessage.addListener(messageReceivedEvent);
-
-async function getVideoInfo() {
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const currentTab = tabs[0];
-
-  chrome.scripting.executeScript(
-    {
-      target: { tabId: currentTab.id },
-      func: getVideoInfoFromPage,
-    },
-    (result) => {
-      const r = result[0].result;
-      document.getElementById("ytTitle").innerText = r.title;
-      document.getElementById("ytUrl").innerText = currentTab.url;
-      document.getElementById("ytCurrentTime").innerText = r.currentTime;
-      document.getElementById("ytTotalTime").innerText = r.totalTime;
-      document.getElementById("ytChannelAlias").innerText = r.channelAlias;
-      document.getElementById("ytChannelName").innerText = r.channelName;
-      document.getElementById("ytVideoId").innerText = r.videoId;
-      document.getElementById("ytImg").src = r.imgSrc;
-
-      window.localStorage.setItem("ytTitle", r.title);
-      window.localStorage.setItem("ytUrl", currentTab.url);
-      window.localStorage.setItem("ytCurrentTime", r.currentTime);
-      window.localStorage.setItem("ytTotalTime", r.totalTime);
-      window.localStorage.setItem("ytChannelAlias", r.channelAlias);
-      window.localStorage.setItem("ytChannelName", r.channelName);
-      window.localStorage.setItem("ytVideoId", r.videoId);
-    }
-  );
-}
-
-document.addEventListener("yt-navigate-finish", function () {
-  // Handle the event when the page navigation finishes
-  console.error("NEW VIDEO PAGE LOADED. FETCH NEW TAG INFORMATION HERE.");
-  getVideoInfo();
-  let counter = window.localStorage.getItem("counter") ?? 0;
-  window.localStorage.setItem("counter", counter + 1);
-
-  // Your logic to fetch and process the new video tags
-  // ...
-});
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.msg === "ytPageUpdated") {
@@ -183,17 +125,33 @@ async function sendMessageToContentScript(message) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-  console.warn("POR ENVIAR MENSAJE AL SCRIPT");
-  await sendMessageToContentScript("PASAME LOS DATOS");
-  console.warn("MENSAJE ENVIADO");
+  // (async () => {
+  //   console.error("SALUDE AL CONTENT");
+  //   const response = await chrome.runtime.sendMessage({ greeting: "hello" });
+  //   // do something with response here, not outside the function
+  //   console.log(response);
+  // })();
+  // await sendMessageToContentScript("PASAME LOS DATOS");
   const saveButton = document.getElementById("ytSaveButton");
   const note = document.getElementById("ytNote");
-  const title = document.getElementById("ytTitle");
-  const url = document.getElementById("ytUrl");
-  const channelName = document.getElementById("ytChannelName");
-  const channelAlias = document.getElementById("ytChannelAlias");
-  const videoId = document.getElementById("ytVideoId");
-  const currentTime = document.getElementById("ytCurrentTime");
+
+  const title = window.localStorage.getItem("ytTitle");
+  const url = window.localStorage.getItem("ytVideoUrl");
+  const channelName = window.localStorage.getItem("ytChannelName");
+  const channelAlias = window.localStorage.getItem("ytChannelAlias");
+  const videoId = window.localStorage.getItem("ytVideoId");
+  const currentTime = window.localStorage.getItem("ytCurrentTime");
+  const imgSrc = window.localStorage.getItem("ytImgSrc");
+
+  console.warn("SETTING UP");
+  console.warn({ title, url, channelName, channelAlias, videoId, currentTime });
+  document.getElementById("ytTitle").innerHTML = title;
+  document.getElementById("ytUrl").innerHTML = url;
+  document.getElementById("ytChannelName").innerHTML = channelName;
+  document.getElementById("ytChannelAlias").innerHTML = channelAlias;
+  document.getElementById("ytVideoId").innerHTML = videoId;
+  document.getElementById("ytCurrentTime").innerHTML = currentTime;
+  document.getElementById("ytImg").src = imgSrc;
 
   const videoIdText = window.localStorage.getItem("ytVideoId");
   function dispatchNotesUpdatedEvent(videoIdParam) {
@@ -213,8 +171,6 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Add event listeners
-  saveButton.addEventListener("click", () => dispatchNotesUpdatedEvent(123));
-  console.error("NOTES2", document.getElementById("ytNotes2"));
   // document.getElementById("ytNotes2").addEventListener("notesUpdated", handleNotesUpdatedEvent);
   document.addEventListener("notesUpdated", handleNotesUpdatedEvent);
 
@@ -319,36 +275,5 @@ document.addEventListener("DOMContentLoaded", async function () {
       updateNotes(videoIdText);
     });
     chrome.runtime.sendMessage({ action: "noteUpdated" });
-  });
-
-  // Set variables in tags
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    var currentTab = tabs[0];
-
-    chrome.scripting.executeScript(
-      {
-        target: { tabId: currentTab.id },
-        func: getVideoInfoFromPage,
-      },
-      (result) => {
-        const r = result[0].result;
-        document.getElementById("ytTitle").innerText = r.title;
-        document.getElementById("ytUrl").innerText = currentTab.url;
-        document.getElementById("ytCurrentTime").innerText = r.currentTime;
-        document.getElementById("ytTotalTime").innerText = r.totalTime;
-        document.getElementById("ytChannelAlias").innerText = r.channelAlias;
-        document.getElementById("ytChannelName").innerText = r.channelName;
-        document.getElementById("ytVideoId").innerText = r.videoId;
-        document.getElementById("ytImg").src = r.imgSrc;
-
-        window.localStorage.setItem("ytTitle", r.title);
-        window.localStorage.setItem("ytUrl", currentTab.url);
-        window.localStorage.setItem("ytCurrentTime", r.currentTime);
-        window.localStorage.setItem("ytTotalTime", r.totalTime);
-        window.localStorage.setItem("ytChannelAlias", r.channelAlias);
-        window.localStorage.setItem("ytChannelName", r.channelName);
-        window.localStorage.setItem("ytVideoId", r.videoId);
-      }
-    );
   });
 });
