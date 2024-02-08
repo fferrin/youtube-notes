@@ -87,14 +87,17 @@ async function updateNotes(videoId) {
   });
 }
 
-function messageReceivedEvent(message) {
+function messageReceivedEvent(request, sender, sendResponse) {
   console.error("messageReceivedEvent");
-  console.error("MENSAJE RECIBIDO", { action: message.action });
-  switch (message.action) {
+  console.error("MENSAJE RECIBIDO", { action: request.action });
+  switch (request.action) {
+    case "content-to-popup":
+      console.log("ACA TENES LA RESPUESTA");
+      break;
     case "ytNavigateFinish":
     case "ytPageUpdated":
-      const data = JSON.parse(message.data);
-      window.localStorage.clear()
+      const data = JSON.parse(request.data);
+      window.localStorage.clear();
       window.localStorage.setItem("ytTitle", data.title);
       window.localStorage.setItem("ytVideoUrl", data.videoUrl);
       window.localStorage.setItem("ytImageUrl", data.imgSrc);
@@ -104,25 +107,44 @@ function messageReceivedEvent(message) {
       window.localStorage.setItem("ytVideoId", data.videoId);
   }
 }
-chrome.runtime.onMessage.addListener(messageReceivedEvent);
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.msg === "ytPageUpdated") {
-    //  To do something
-    console.log(request.data.subject);
-    console.log(request.data.content);
-    window.localStorage.setItem("MENSAJE", request.data.content);
-  }
-});
-
+// chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+//   if (request.msg === "ytPageUpdated") {
+//     //  To do something
+//     console.log(request.data.subject);
+//     console.log(request.data.content);
+//     window.localStorage.setItem("MENSAJE", request.data.content);
+//   }
+// });
+//
 async function sendMessageToContentScript(message) {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const activeTab = tabs[0];
-  chrome.tabs.sendMessage(activeTab.id, {
-    type: "popup-to-content",
-    message: message,
-  });
+  chrome.tabs.sendMessage(
+    activeTab.id,
+    {
+      type: "popup-to-content",
+      message: message,
+    },
+    function (response) {
+      console.warn("RESPONSE", response)
+      const { message } = response;
+      console.warn(message)
+      window.localStorage.clear();
+      window.localStorage.setItem("ytTitle", message.title);
+      window.localStorage.setItem("ytVideoUrl", message.videoUrl);
+      window.localStorage.setItem("ytImageUrl", message.imgSrc);
+      window.localStorage.setItem("ytTotalTime", message.totalTime);
+      window.localStorage.setItem("ytChannelAlias", message.channelAlias);
+      window.localStorage.setItem("ytChannelName", message.channelName);
+      window.localStorage.setItem("ytVideoId", message.videoId);
+      window.localStorage.setItem("currentTime", message.currentTime);
+      window.localStorage.setItem("totalTime", message.totalTime);
+    }
+  );
 }
+
+chrome.runtime.onMessage.addListener(messageReceivedEvent);
 
 document.addEventListener("DOMContentLoaded", async function () {
   // (async () => {
@@ -131,7 +153,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   //   // do something with response here, not outside the function
   //   console.log(response);
   // })();
-  // await sendMessageToContentScript("PASAME LOS DATOS");
+  await sendMessageToContentScript("PASAME LOS DATOS");
   const saveButton = document.getElementById("ytSaveButton");
   const note = document.getElementById("ytNote");
 

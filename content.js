@@ -7,17 +7,18 @@ const getVideoInfoFromPage = () => {
   const title = document.querySelector(
     "#above-the-fold div#title yt-formatted-string"
   )?.textContent;
-  const channelName = document
-    .querySelector("#top-row #text")
-    .getAttribute("title");
-  const channelAlias = document
-    .querySelector("#top-row #text a")
-    .getAttribute("href")
-    .split("/")
-    .at(-1);
-  const videoId = document
-    .querySelector("ytd-page-manager#page-manager ytd-watch-flexy")
-    .getAttribute("video-id");
+  const channelName =
+    document.querySelector("#top-row #text")?.getAttribute("title") || "";
+  const channelAlias =
+    document
+      .querySelector("#top-row #text a")
+      ?.getAttribute("href")
+      ?.split("/")
+      ?.at(-1) || "";
+  const videoId =
+    document
+      .querySelector("ytd-page-manager#page-manager ytd-watch-flexy")
+      ?.getAttribute("video-id") || "";
   const currentTime = Math.floor(document.querySelector("video").currentTime);
   const totalTime = Math.floor(document.querySelector("video").duration);
   const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
@@ -52,23 +53,24 @@ function sendMessageToExtension(eventType, data) {
 // Alternative to load event
 document.onreadystatechange = () => {
   if (document.readyState === "complete") {
-    console.error("document.readyState.complete");
-    console.error(getVideoInfoFromPage());
+    console.warn("document.readyState.complete");
+    console.warn(getVideoInfoFromPage());
     afterDOMLoaded();
   }
 };
 
-async function afterDOMLoaded() {
-  chrome.runtime.onMessage.addListener(
-    function (request, sender, sendResponse) {
-      if (request.type === "popup-to-content") {
-        // Handle the message from the popup
-        console.log("Message from Popup:", request.message);
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.type === "popup-to-content") {
+    // Handle the message from the popup
+    console.log("Message from Popup:", request.message);
+    console.info("Te mando la data pa", { data: getVideoInfoFromPage() });
 
-        // Add your logic to handle the message here
-      }
-    }
-  );
+    sendResponse({ action: "content-to-popup", message: getVideoInfoFromPage() });
+    return true;
+  }
+});
+
+async function afterDOMLoaded() {
   // console.error("INFO FROM PAGE");
   // console.error(getVideoInfoFromPage());
   // document.addEventListener("yt-navigate-finish", function () {
@@ -79,27 +81,44 @@ async function afterDOMLoaded() {
   //   );
   // });
 
-  console.info("Document state", document.readyState);
+  document.addEventListener("yt-guide-show", function () {
+    // alert("yt-guide-show");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("yt-guide-toggle", function () {
+    // alert("yt-guide-toggle");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("yt-navigate-cache", function () {
+    // alert("yt-navigate-cache");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("yt-navigate-finish", function () {
+    // alert("yt-navigate-finish");
+    console.info(getVideoInfoFromPage());
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
   document.addEventListener("yt-navigate-start", function () {
-    console.info("yt-navigate-start");
-    console.info(getVideoInfoFromPage());
-    sendMessageToExtension(
-      "ytNavigateFinish",
-      JSON.stringify(getVideoInfoFromPage())
-    );
-  });
-
-  window.addEventListener("yt-navigate-finish", function () {
-    console.info("yt-navigate-finish");
-    console.info(getVideoInfoFromPage());
-    sendMessageToExtension(
-      "ytNavigateFinish",
-      JSON.stringify(getVideoInfoFromPage())
-    );
-  });
-
-  window.addEventListener("yt-navigate-cache", function () {
-    console.info("yt-navigate-cache");
+    // alert("yt-navigate-start");
     console.info(getVideoInfoFromPage());
     sendMessageToExtension(
       "ytNavigateFinish",
@@ -108,7 +127,39 @@ async function afterDOMLoaded() {
   });
 
   document.addEventListener("yt-page-data-updated", function () {
-    console.info("yt-page-data-updated");
+    // alert("yt-page-data-updated");
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("yt-page-type-changed", function () {
+    // alert("yt-page-type-changed");
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("load", function () {
+    // alert("load");
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("readystatechange", function () {
+    // alert("readystatechange");
+    sendMessageToExtension(
+      "ytNavigateFinish",
+      JSON.stringify(getVideoInfoFromPage())
+    );
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // alert("DOMContentLoaded");
     sendMessageToExtension(
       "ytNavigateFinish",
       JSON.stringify(getVideoInfoFromPage())
