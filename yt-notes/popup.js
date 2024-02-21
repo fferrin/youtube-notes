@@ -18,22 +18,35 @@ function formatTime(seconds) {
   }
 }
 
-function seekTo(seconds) {
-  // document.getElementById("movie_player").seekTo(seconds);
-  document.getElementsByTagName("video")[0].currentTime = seconds;
-}
+document.addEventListener("noteEdited", async function (payload) {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const activeTab = tabs[0];
+  chrome.tabs.sendMessage(activeTab.id, {
+    type: "setVideoTimeTo",
+    message: { timestamp: payload.detail.timestamp },
+  });
+});
 
-async function removeNoteFromStorage(videoId, timestamp) {
-  const notes = await chrome.storage.local.get([videoId]);
-  delete notes[videoId][timestamp];
-  await chrome.storage.local.set({ [videoId]: notes[videoId] });
-  chrome.runtime.sendMessage({ action: "noteDeleted" });
-}
+document.addEventListener("noteEdited", function (payload) {
+  const note = document.getElementById("ytNote");
+  note.value = payload.detail.note;
+});
 
-async function updateNotes(videoId) {
+document.addEventListener("noteEdited", function (payload) {
+  document.getElementById("ytCurrentTime").innerHTML = payload.detail.timestamp;
+});
+
+document.addEventListener("noteSaved", function (payload) {
+  const { notesInVideo, note, timestamp } = payload.detail;
+  const newNotes = { ...notesInVideo, [timestamp]: note };
+  window.localStorage.setItem("notes", JSON.stringify(newNotes));
+  chrome.storage.local.set({ [payload.detail.videoId]: newNotes });
+});
+
+function renderList(videoId) {
+  console.info("Rendering list for", videoId);
   chrome.storage.local.get({ [videoId]: {} }, function (result) {
     const notesInVideo = result[videoId] ?? {};
-
     var ulElement = document.getElementById("ytNotes");
     ulElement.innerHTML = "";
 
@@ -50,31 +63,23 @@ async function updateNotes(videoId) {
 
       // Delete button
       deleteButton.textContent = "Delete";
+
       (function (timestamp) {
         deleteButton.addEventListener("click", function () {
-          console.log(`Delete clicked for: ${timestamp}`);
-          removeNoteFromStorage(videoId, timestamp);
           li.remove();
+          const event = new CustomEvent("noteDeleted", {
+            detail: { timestamp },
+          });
+          document.dispatchEvent(event);
         });
       })(timestamp);
 
       (function (timestamp) {
-        a.addEventListener("click", function (event) {
-          event.preventDefault();
-
-          chrome.tabs.query(
-            { active: true, currentWindow: true },
-            function (tabs) {
-              var currentTab = tabs[0];
-
-              chrome.scripting.executeScript({
-                target: { tabId: currentTab.id },
-                func: seekTo,
-                args: [timestamp],
-              });
-            }
-          );
-          note.value = notesInVideo[timestamp];
+        a.addEventListener("click", function () {
+          const event = new CustomEvent("noteEdited", {
+            detail: { timestamp, note: notesInVideo[timestamp] },
+          });
+          document.dispatchEvent(event);
         });
       })(timestamp);
 
@@ -87,6 +92,26 @@ async function updateNotes(videoId) {
   });
 }
 
+document.addEventListener("videoInfoUpdated ", function (payload) {
+  console.info("videoInfoUpdated ");
+  renderList(payload.detail.videoId);
+});
+document.addEventListener("noteEdited ", function (payload) {
+  console.info("noteEdited ");
+  renderList(payload.detail.videoId);
+});
+document.addEventListener("noteSaved ", function (payload) {
+  console.info("noteSaved ");
+  renderList(payload.detail.videoId);
+});
+
+document.addEventListener("videoInfoUpdated", function (payload) {
+  chrome.storage.local.get({ [payload.detail.videoId]: {} }, function (result) {
+    const notesInVideo = result[payload.detail.videoId] ?? {};
+    window.localStorage.setItem("notes", JSON.stringify(notesInVideo));
+  });
+});
+
 // DOM Manipulation
 document.addEventListener("videoInfoUpdated", function (payload) {
   const { detail: data } = payload;
@@ -98,6 +123,23 @@ document.addEventListener("videoInfoUpdated", function (payload) {
   document.getElementById("ytImg").src = data.imgSrc;
   document.getElementById("ytCurrentTime").innerHTML = data.currentTime;
   document.getElementById("ytTotalTime").innerHTML = data.totalTime;
+  document
+    .getElementById("ytSaveButton")
+    .addEventListener("click", function () {
+      const note = document.getElementById("ytNote").value;
+      const timestamp = document.getElementById("ytCurrentTime").innerHTML;
+      const notesInVideo = JSON.parse(window.localStorage.getItem("notes"));
+      document.dispatchEvent(
+        new CustomEvent("noteSaved", {
+          detail: {
+            videoId: data.videoId,
+            note,
+            timestamp,
+            notesInVideo,
+          },
+        })
+      );
+    });
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -118,6 +160,128 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 /////////
+
+// async function updateNotes(videoId) {
+//   chrome.storage.local.get({ [videoId]: {} }, function (result) {
+//     const notesInVideo = result[videoId] ?? {};
+//
+//     var ulElement = document.getElementById("ytNotes");
+//     ulElement.innerHTML = "";
+//
+//     for (var timestamp in notesInVideo) {
+//       const li = document.createElement("li");
+//       const a = document.createElement("a");
+//       const textBetween = document.createElement("span");
+//       const deleteButton = document.createElement("button");
+//
+//       a.href = "#";
+//       a.textContent = formatTime(timestamp);
+//
+//       textBetween.textContent = notesInVideo[timestamp];
+//
+//       // Delete button
+//       deleteButton.textContent = "Delete";
+//
+//       (function (timestamp) {
+//         deleteButton.addEventListener("click", function () {
+//           li.remove();
+//           const event = new CustomEvent("noteDeleted", {
+//             detail: { timestamp },
+//           });
+//           document.dispatchEvent(event);
+//         });
+//       })(timestamp);
+//
+//       (function (timestamp) {
+//         a.addEventListener("click", function () {
+//           const event = new CustomEvent("noteEdited", {
+//             detail: { timestamp, note: notesInVideo[timestamp] },
+//           });
+//           document.dispatchEvent(event);
+//         });
+//       })(timestamp);
+//
+//       li.appendChild(a);
+//       li.appendChild(textBetween);
+//       li.appendChild(deleteButton);
+//
+//       ulElement.appendChild(li);
+//     }
+//   });
+// }
+
+// async function removeNoteFromStorage(videoId, timestamp) {
+//   const notes = await chrome.storage.local.get([videoId]);
+//   delete notes[videoId][timestamp];
+//   await chrome.storage.local.set({ [videoId]: notes[videoId] });
+// }
+//
+// function seekTo(seconds) {
+//   // document.getElementById("movie_player").seekTo(seconds);
+//   document.getElementsByTagName("video")[0].currentTime = seconds;
+// }
+
+// document.addEventListener("videoInfoUpdated", function (payload) {
+//   chrome.storage.local.get({ [payload.detail.videoId]: {} }, function (result) {
+//     const notesInVideo = result[payload.detail.videoId] ?? {};
+//     console.info("NOTES IN VIDEO", notesInVideo);
+//
+//     var ulElement = document.getElementById("ytNotes");
+//     ulElement.innerHTML = "";
+//
+//     for (var timestamp in notesInVideo) {
+//       const li = document.createElement("li");
+//       const a = document.createElement("a");
+//       const textBetween = document.createElement("span");
+//       const deleteButton = document.createElement("button");
+//
+//       a.href = "#";
+//       a.textContent = formatTime(timestamp);
+//
+//       textBetween.textContent = notesInVideo[timestamp];
+//
+//       // Delete button
+//       deleteButton.textContent = "Delete";
+//       (function (timestamp) {
+//         deleteButton.addEventListener("click", function () {
+//           console.log(`Delete clicked for: ${timestamp}`);
+//           removeNoteFromStorage(videoId, timestamp);
+//           li.remove();
+//         });
+//       })(timestamp);
+//
+//       (function (timestamp) {
+//         a.addEventListener("click", function (e) {
+//           // event.preventDefault();
+//           const event = new CustomEvent("noteEdited", {
+//             detail: { timestamp, note: notesInVideo[timestamp] },
+//           });
+//           document.dispatchEvent(event);
+//
+//           // chrome.tabs.query(
+//           //   { active: true, currentWindow: true },
+//           //   function (tabs) {
+//           //     var currentTab = tabs[0];
+//           //
+//           //     chrome.scripting.executeScript({
+//           //       target: { tabId: currentTab.id },
+//           //       func: seekTo,
+//           //       args: [timestamp],
+//           //     });
+//           //   }
+//           // );
+//           // note.value = notesInVideo[timestamp];
+//         });
+//       })(timestamp);
+//
+//       li.appendChild(a);
+//       li.appendChild(textBetween);
+//       li.appendChild(deleteButton);
+//
+//       ulElement.appendChild(li);
+//     }
+//   });
+// });
 
 // document.addEventListener("DOMContentLoaded", async function () {
 //   // (async () => {

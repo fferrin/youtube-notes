@@ -42,13 +42,20 @@ function notifyPopupForVideoInfo() {
   });
 }
 
+function seekTo(seconds) {
+  // document.getElementById("movie_player").seekTo(seconds);
+  document.getElementsByTagName("video")[0].currentTime = seconds;
+}
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   switch (request.type) {
     case "requestVideoInfo":
       notifyPopupForVideoInfo();
       break;
+    case "setVideoTimeTo":
+      seekTo(request.message.timestamp)
+      break;
   }
-  return true;
 });
 
 // TODO: Check this. Probably it's not needed

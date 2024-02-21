@@ -28,7 +28,7 @@
       "js": ["content.js"]
     }
   ],
-  "permissions": ["tabs", "activeTab", "scripting", "storage"],
+  "permissions": ["tabs", "activeTab", "scripting", "storage", "unlimitedStorage"],
   "host_permissions": ["https://www.youtube.com/watch*"],
   "externally_connectable": {
     "matches": ["https://www.youtube.com/watch*"]
