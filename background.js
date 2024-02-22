@@ -29,7 +29,10 @@ async function updateBadgeForUrl() {
 }
 
 function messageReceivedEvent(message) {
+  console.info("BG - messageReceivedEvent", message)
   switch (message.action) {
+    case "noteSaved":
+    case "noteEdited":
     case "noteCreated":
     case "noteUpdated":
     case "noteDeleted":

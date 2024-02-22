@@ -44,7 +44,6 @@ document.addEventListener("noteSaved", function (payload) {
 });
 
 function renderList(videoId) {
-  console.info("Rendering list for", videoId);
   chrome.storage.local.get({ [videoId]: {} }, function (result) {
     const notesInVideo = result[videoId] ?? {};
     var ulElement = document.getElementById("ytNotes");
@@ -68,7 +67,7 @@ function renderList(videoId) {
         deleteButton.addEventListener("click", function () {
           li.remove();
           const event = new CustomEvent("noteDeleted", {
-            detail: { timestamp },
+            detail: { timestamp, videoId },
           });
           document.dispatchEvent(event);
         });
@@ -92,17 +91,51 @@ function renderList(videoId) {
   });
 }
 
-document.addEventListener("videoInfoUpdated ", function (payload) {
-  console.info("videoInfoUpdated ");
+document.addEventListener("videoInfoUpdated", function (payload) {
+  const { videoId, currentTime: timestamp } = payload.detail;
+  chrome.storage.local.get({ [videoId]: {} }, function (result) {
+    const notesInVideo = result[videoId] ?? {};
+    const note = document.getElementById("ytNote");
+    note.value = notesInVideo[timestamp] ?? ""
+  });
+});
+
+document.addEventListener("videoInfoUpdated", function (payload) {
   renderList(payload.detail.videoId);
 });
-document.addEventListener("noteEdited ", function (payload) {
-  console.info("noteEdited ");
+
+document.addEventListener("noteSaved", function (payload) {
   renderList(payload.detail.videoId);
 });
-document.addEventListener("noteSaved ", function (payload) {
-  console.info("noteSaved ");
+
+document.addEventListener("noteEdited", function (payload) {
   renderList(payload.detail.videoId);
+});
+
+document.addEventListener("noteSaved", function (payload) {
+  chrome.runtime.sendMessage({ type: "noteSaved", action: "noteSaved" });
+});
+
+document.addEventListener("noteEdited", function (payload) {
+  chrome.runtime.sendMessage({ type: "noteEdited", action: "noteEdited" });
+});
+
+document.addEventListener("noteDeleted", function (payload) {
+  chrome.runtime.sendMessage({ type: "noteDeleted", action: "noteDeleted" });
+});
+
+document.addEventListener("noteDeleted", function (payload) {
+  const notes = JSON.parse(window.localStorage.getItem("notes"));
+  delete notes[payload.detail.timestamp];
+  window.localStorage.setItem("notes", JSON.stringify(notes));
+});
+
+document.addEventListener("noteDeleted", function (payload) {
+  chrome.storage.local.get({ [payload.detail.videoId]: {} }, function (result) {
+    const notesInVideo = result[payload.detail.videoId] ?? {};
+    delete notesInVideo[payload.detail.timestamp];
+    chrome.storage.local.set({ [payload.detail.videoId]: notesInVideo });
+  });
 });
 
 document.addEventListener("videoInfoUpdated", function (payload) {
@@ -435,3 +468,4 @@ document.addEventListener("DOMContentLoaded", async function () {
 //     chrome.runtime.sendMessage({ action: "noteUpdated" });
 //   });
 // });
+//
