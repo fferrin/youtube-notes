@@ -53,7 +53,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       notifyPopupForVideoInfo();
       break;
     case "setVideoTimeTo":
-      seekTo(request.message.timestamp)
+      seekTo(request.message.timestamp);
       break;
   }
 });

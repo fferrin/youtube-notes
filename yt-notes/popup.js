@@ -34,6 +34,7 @@ document.addEventListener("noteEdited", function (payload) {
 
 document.addEventListener("noteEdited", function (payload) {
   document.getElementById("ytCurrentTime").innerHTML = payload.detail.timestamp;
+  document.getElementById("ytFormattedCurrentTime").innerHTML = formatTime(payload.detail.timestamp)
 });
 
 document.addEventListener("noteSaved", function (payload) {
@@ -155,6 +156,7 @@ document.addEventListener("videoInfoUpdated", function (payload) {
   document.getElementById("ytVideoId").innerHTML = data.videoId;
   document.getElementById("ytImg").src = data.imgSrc;
   document.getElementById("ytCurrentTime").innerHTML = data.currentTime;
+  document.getElementById("ytFormattedCurrentTime").innerHTML = formatTime(data.currentTime)
   document.getElementById("ytTotalTime").innerHTML = data.totalTime;
   document
     .getElementById("ytSaveButton")
