@@ -23,7 +23,7 @@ document.addEventListener("noteEdited", async function (payload) {
   const activeTab = tabs[0];
   chrome.tabs.sendMessage(activeTab.id, {
     type: "setVideoTimeTo",
-    message: { timestamp: payload.detail.timestamp },
+    message: { timestamp: payload.detail.timestamp, channelAlias: payload.detail.channelAlias },
   });
 });
 
@@ -43,7 +43,7 @@ document.addEventListener("noteSaved", function (payload) {
   chrome.storage.local.set({ [payload.detail.videoId]: newNotes });
 });
 
-function renderList(videoId) {
+function renderList(videoId, channelAlias) {
   chrome.storage.local.get({ [videoId]: {} }, function (result) {
     const notesInVideo = result[videoId] ?? {};
     var ulElement = document.getElementById("ytNotes");
@@ -67,7 +67,7 @@ function renderList(videoId) {
         deleteButton.addEventListener("click", function () {
           li.remove();
           const event = new CustomEvent("noteDeleted", {
-            detail: { timestamp, videoId },
+            detail: { timestamp, videoId, channelAlias },
           });
           document.dispatchEvent(event);
         });
@@ -76,7 +76,7 @@ function renderList(videoId) {
       (function (timestamp) {
         a.addEventListener("click", function () {
           const event = new CustomEvent("noteEdited", {
-            detail: { timestamp, note: notesInVideo[timestamp] },
+            detail: { timestamp, channelAlias, videoId, note: notesInVideo[timestamp] },
           });
           document.dispatchEvent(event);
         });
@@ -101,15 +101,15 @@ document.addEventListener("videoInfoUpdated", function (payload) {
 });
 
 document.addEventListener("videoInfoUpdated", function (payload) {
-  renderList(payload.detail.videoId);
+  renderList(payload.detail.videoId, payload.detail.channelAlias);
 });
 
 document.addEventListener("noteSaved", function (payload) {
-  renderList(payload.detail.videoId);
+  renderList(payload.detail.videoId, payload.detail.channelAlias);
 });
 
 document.addEventListener("noteEdited", function (payload) {
-  renderList(payload.detail.videoId);
+  renderList(payload.detail.videoId, payload.detail.channelAlias);
 });
 
 document.addEventListener("noteSaved", function (payload) {
@@ -237,8 +237,7 @@ document.addEventListener("noteDeleted", function (payload) {
     if (Object.entries(notesInVideo).length === 0) {
       chrome.storage.local.remove([payload.detail.videoId]);
 
-      // TODO: Not working. ChannelAlias and Channel in videos are not removed
-      const channelAlias = document.getElementById("ytChannelAlias").innerHTML;
+      const channelAlias = payload.detail.channelAlias
       chrome.storage.local.get([channelAlias], function (result) {
         const videosInChannel = result[channelAlias] ?? {};
         delete videosInChannel[payload.detail.videoId];
