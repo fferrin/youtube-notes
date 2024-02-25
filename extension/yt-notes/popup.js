@@ -33,8 +33,10 @@ document.addEventListener("noteEdited", function (payload) {
 });
 
 document.addEventListener("noteEdited", function (payload) {
-  document.getElementById("ytCurrentTime").innerHTML = payload.detail.timestamp;
   document.getElementById("ytFormattedCurrentTime").innerHTML = formatTime(payload.detail.timestamp)
+
+  window.localStorage.setItem("ytCurrentTime", payload.detail.timestamp)
+  window.localStorage.setItem("ytFormattedCurrentTime", formatTime(payload.detail.timestamp))
 });
 
 document.addEventListener("noteSaved", function (payload) {
@@ -149,23 +151,35 @@ document.addEventListener("videoInfoUpdated", function (payload) {
 // DOM Manipulation
 document.addEventListener("videoInfoUpdated", function (payload) {
   const { detail: data } = payload;
+  window.localStorage.setItem("ytTitle", data.title);
+  window.localStorage.setItem("ytUrl", data.videoUrl);
+  window.localStorage.setItem("ytChannelName", data.channelName);
+  window.localStorage.setItem("ytChannelAlias", data.channelAlias);
+  window.localStorage.setItem("ytVideoId", data.videoId);
+  window.localStorage.setItem("ytImg", data.imgSrc);
+  window.localStorage.setItem("ytCurrentTime", data.currentTime);
+  window.localStorage.setItem("ytFormattedCurrentTime", formatTime(data.currentTime));
+  window.localStorage.setItem("ytTotalTime", data.totalTime);
+
   document.getElementById("ytTitle").innerHTML = data.title;
-  document.getElementById("ytUrl").innerHTML = data.videoUrl;
+  // document.getElementById("ytUrl").innerHTML = data.videoUrl;
   document.getElementById("ytChannelName").innerHTML = data.channelName;
   document.getElementById("ytChannelAlias").innerHTML = data.channelAlias;
-  document.getElementById("ytVideoId").innerHTML = data.videoId;
+  // document.getElementById("ytVideoId").innerHTML = data.videoId;
   document.getElementById("ytImg").src = data.imgSrc;
-  document.getElementById("ytCurrentTime").innerHTML = data.currentTime;
   document.getElementById("ytFormattedCurrentTime").innerHTML = formatTime(data.currentTime)
-  document.getElementById("ytTotalTime").innerHTML = data.totalTime;
+  // document.getElementById("ytTotalTime").innerHTML = data.totalTime;
   document
     .getElementById("ytSaveButton")
     .addEventListener("click", function () {
       const note = document.getElementById("ytNote").value;
-      const timestamp = document.getElementById("ytCurrentTime").innerHTML;
-      const channelAlias = document.getElementById("ytChannelAlias").innerHTML;
-      const channelName = document.getElementById("ytChannelName").innerHTML;
-      const videoTitle = document.getElementById("ytTitle").innerHTML;
+      // const channelAlias = document.getElementById("ytChannelAlias").innerHTML;
+      // const channelName = document.getElementById("ytChannelName").innerHTML;
+      // const videoTitle = document.getElementById("ytTitle").innerHTML;
+      const timestamp = window.localStorage.getItem("ytCurrentTime");
+      const channelAlias = window.localStorage.getItem("ytChannelAlias")
+      const channelName = window.localStorage.getItem("ytChannelName")
+      const videoTitle = window.localStorage.getItem("ytTitle")
       const notesInVideo = JSON.parse(window.localStorage.getItem("notes"));
       document.dispatchEvent(
         new CustomEvent("noteSaved", {
