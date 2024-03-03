@@ -43,7 +43,6 @@ function notifyPopupForVideoInfo() {
 }
 
 function seekTo(seconds) {
-  // document.getElementById("movie_player").seekTo(seconds);
   document.getElementsByTagName("video")[0].currentTime = seconds;
 }
 
