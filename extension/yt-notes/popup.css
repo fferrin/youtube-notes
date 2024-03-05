@@ -1,11 +1,269 @@
-body > .scaffold > :is(top-nav, navigation-rail, side-nav, footer),
-main > :not(:last-child),
-main > :last-child > navigation-tree,
+html {
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: normal;
+  font-family: Lato, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  font-variation-settings: normal;
+  line-height: 1.5;
+  tab-size: 4;
+}
+
+audio,
+canvas,
+embed,
+iframe,
+img,
+object,
+svg,
+video {
+  display: block;
+}
+
+body>.scaffold> :is(top-nav, navigation-rail, side-nav, footer),
+main> :not(:last-child),
+main> :last-child>navigation-tree,
 main .toc-container {
   display: none;
 }
 
-main > :last-child {
+main> :last-child {
   margin-top: min(10vmax, 10rem);
   margin-bottom: min(10vmax, 10rem);
+}
+
+body {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  background-color: rgb(27 27 27);
+  color: #fff
+}
+
+.main {
+  width: 423px;
+  /* height: 584px; */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.container {
+  background-color: rgb(27 27 27);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.first-container,
+.third-container {
+  margin: 0;
+  padding: 0;
+  forced-color-adjust: none;
+}
+
+.topbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  height: 42px;
+  max-height: 42px;
+  min-height: 42px;
+  background-color: rgb(63 63 63);
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.topbar-left {
+  cursor: default;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px
+}
+
+.topbar-left h1 {
+  font-size: small;
+}
+
+.topbar-left img {
+  object-fit: contain;
+}
+
+.topbar-right {
+  cursor: default;
+}
+
+.second-container {
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  flex-grow: 1;
+  overflow: auto;
+  margin: 0;
+}
+
+.video-info-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0px;
+}
+
+.video-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.video-text h2 {
+  font-size: medium;
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+.video-text .channel-info {
+  font-size: small;
+  color: #bebbbb;
+}
+
+.write-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.write-container-text {
+  font-size: small;
+  padding-bottom: 12px;
+  margin-top: 8px;
+}
+
+.textarea-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px
+}
+
+.textarea-container button {
+  align-self: flex-end;
+  background-color: #f1f1f1;
+  color: #0f0f0f;
+  padding: 8px 12px;
+  display: inline-block;
+  margin: 4px 2px;
+  border: none;
+  border-radius: 18px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  font-size: small;
+  font-weight: 500
+}
+
+.textarea-container button:hover {
+  background-color: #d9d9d9;
+}
+
+.textarea-container textarea {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #666;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: Arial, sans-serif;
+  resize: vertical;
+}
+
+hr {
+  height: 1px;
+  border: none;
+  background-color: #666;
+  margin: 10px 0;
+}
+
+
+.write-container {
+  display: flex;
+  flex-direction: column;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notes-container ul {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.notes-container ul li {
+  display: flex;
+  justify-content: start;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+}
+
+.notes-container ul li a {
+  color: #fff;
+  transition: color 0.3s ease;
+  font-size: small;
+  height: fit-content;
+}
+
+.notes-container ul li a:hover {
+  color: #ccc;
+}
+
+.notes-container ul li a:visited {
+  color: #aaa;
+}
+
+.notes-container ul li span {
+  font-size: small;
+}
+
+
+.delete-button {
+  all: unset;
+  cursor: pointer;
+  height: fit-content;
+  /* margin-left: auto; */
+  /* padding-right: 8px; */
+}
+
+.delete-button svg {
+  fill: white;
+}
+
+.delete-button:hover svg {
+  fill: #d9d9d9;
+}
+
+.confirmation-button,
+.cancel-button {
+  all: unset;
+  cursor: pointer;
+  height: fit-content;
+}
+
+.confirmation-button,
+.cancel-button svg {
+  fill: white;
+}
+
+.confirmation-button:hover svg {
+  fill: #d9d9d9;
+}
+
+.cancel-button:hover svg {
+  fill: #d9d9d9;
 }

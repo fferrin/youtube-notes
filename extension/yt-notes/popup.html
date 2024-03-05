@@ -1,44 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>URL Printer</title>
-    <h1>YouTube Notes!</h1>
+    <title>YouTube Notes</title>
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div class="flex items-center space-x-4">
-      <img
-        id="ytImg"
-        alt="Video thumbnail"
-        class="thumbnail"
-        height="80"
-        width="80"
-      />
-      <div class="info-container">
-        <h2 class="title">
-          <span id="ytTitle"></span>
-        </h2>
-        <div class="upload-info">
-          <!-- VideoId: <span id="ytVideoId"></span> -->
-          <!-- <br /> -->
-          <!-- URL: <span id="ytUrl"></span> -->
-          <!-- <br /> -->
-          Channel: <span id="ytChannelName"></span> (<span
-            id="ytChannelAlias"
-          ></span
-          >)
-          <br />
-          <!-- Time: <span id="ytCurrentTime"></span> / <span id="ytTotalTime"></span> -->
+    <noscript>You need to enable JavaScript to run this extension.</noscript>
+    <div class="main">
+      <div class="container">
+        <div class="first-container">
+          <div class="topbar-container">
+            <div class="topbar-left">
+              <img
+                src="icon-16.png"
+                alt="Video thumbnail"
+                class="logo"
+                height="16"
+                width="16"
+              />
+              <h1>YouTube Notes</h1>
+            </div>
+            <div class="topbar-right">
+              <!-- te dejo este espacio por si necesitas meter algo a la derecha del todo de la topbar -->
+            </div>
+          </div>
         </div>
+        <div class="second-container">
+          <div class="video-info-container">
+            <img
+              id="ytImg"
+              alt="Video thumbnail"
+              class="thumbnail"
+              height="80"
+              width="80"
+            />
+            <div class="video-text">
+              <h2 class="title">
+                <span id="ytTitle"></span>
+              </h2>
+              <div class="channel-info">
+                <!-- VideoId: <span id="ytVideoId"></span> -->
+                <!-- <br /> -->
+                <!-- URL: <span id="ytUrl"></span> -->
+                <!-- <br /> -->
+                <span id="ytChannelName"></span> (<span
+                  id="ytChannelAlias"
+                ></span
+                >)
+                <!-- Time: <span id="ytCurrentTime"></span> /
+                <span id="ytTotalTime"></span> -->
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div class="write-container">
+            <div class="write-container-text">
+              Note on: <span id="ytFormattedCurrentTime"></span>
+            </div>
+            <div class="textarea-container">
+              <textarea id="ytNote" rows="4" cols="50"></textarea>
+              <button id="ytSaveButton">Save</button>
+            </div>
+          </div>
+          <div class="notes-container">
+            <ul id="ytNotes"></ul>
+          </div>
+        </div>
+        <div class="third-container"></div>
       </div>
     </div>
-    <div>Note on: <span id="ytFormattedCurrentTime"></span></div>
-    <textarea id="ytNote" rows="4" cols="50"></textarea>
-
-    <button id="ytSaveButton">Save</button>
-
-    <ul id="ytNotes"></ul>
     <script src="popup.js"></script>
   </body>
 </html>

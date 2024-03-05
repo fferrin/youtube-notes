@@ -23,21 +23,36 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.youtube.com/watch*"],
+      "matches": [
+        "https://*.youtube.com/watch*"
+      ],
+      "css": [
+        "yt-notes/popup.css"
+      ],
       "run_at": "document_idle",
-      "js": ["content.js"]
+      "js": [
+        "content.js"
+      ]
     }
   ],
-  "permissions": ["tabs", "activeTab", "storage"],
-  "host_permissions": ["https://www.youtube.com/watch*"],
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/watch*"
+  ],
   "externally_connectable": {
-    "matches": ["https://www.youtube.com/watch*"]
+    "matches": [
+      "https://www.youtube.com/watch*"
+    ]
   },
   "commands": {
     "_execute_action": {
       "suggested_key": {
         "default": "Ctrl+Y",
-        "mac": "Command+Y"
+        "mac": "Command+I"
       }
     }
   }
