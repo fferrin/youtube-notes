@@ -51,12 +51,12 @@ function saveUpdatedNotesInLocalStorage(payload) {
   const { notesInVideo, note, timestamp } = payload.detail;
   const newNotes = { ...notesInVideo, [timestamp]: note };
   window.localStorage.setItem("notes", JSON.stringify(newNotes));
-  chrome.storage.local.set({ [payload.detail.videoId]: newNotes });
+  chrome.storage.sync.set({ [payload.detail.videoId]: newNotes });
 }
 
 function renderList(videoId, channelAlias) {
   console.info("renderList");
-  chrome.storage.local.get({ [videoId]: {} }, function (result) {
+  chrome.storage.sync.get({ [videoId]: {} }, function (result) {
     const notesInVideo = result[videoId] ?? {};
     var ulElement = document.getElementById("ytNotes");
     ulElement.innerHTML = "";
@@ -119,7 +119,7 @@ function renderList(videoId, channelAlias) {
 
 function updateNoteTextAreaFromStorage(payload) {
   const { videoId, currentTime: timestamp } = payload.detail;
-  chrome.storage.local.get({ [videoId]: {} }, function (result) {
+  chrome.storage.sync.get({ [videoId]: {} }, function (result) {
     const notesInVideo = result[videoId] ?? {};
     const note = document.getElementById("ytNote");
     note.value = notesInVideo[timestamp] ?? "";
@@ -141,15 +141,15 @@ function deleteNoteFromLocalStorage(payload) {
 }
 
 function deleteNoteFromStorage(payload) {
-  chrome.storage.local.get({ [payload.detail.videoId]: {} }, function (result) {
+  chrome.storage.sync.get({ [payload.detail.videoId]: {} }, function (result) {
     const notesInVideo = result[payload.detail.videoId] ?? {};
     delete notesInVideo[payload.detail.timestamp];
-    chrome.storage.local.set({ [payload.detail.videoId]: notesInVideo });
+    chrome.storage.sync.set({ [payload.detail.videoId]: notesInVideo });
   });
 }
 
 function saveNotesInLocalStorage(payload) {
-  chrome.storage.local.get({ [payload.detail.videoId]: {} }, function (result) {
+  chrome.storage.sync.get({ [payload.detail.videoId]: {} }, function (result) {
     const notesInVideo = result[payload.detail.videoId] ?? {};
     window.localStorage.setItem("notes", JSON.stringify(notesInVideo));
   });
@@ -217,21 +217,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function updateVideosInChannelInStorage(payload) {
-  chrome.storage.local.get([payload.detail.channelAlias], function (result) {
+  chrome.storage.sync.get([payload.detail.channelAlias], function (result) {
     const videosInChannel = result[payload.detail.channelAlias] ?? {};
     videosInChannel[payload.detail.videoId] = payload.detail.videoTitle;
-    chrome.storage.local.set({
+    chrome.storage.sync.set({
       [payload.detail.channelAlias]: videosInChannel,
     });
   });
 }
 
 function updateChannelsInStorage(payload) {
-  chrome.storage.local.get(["channels"], function (result) {
+  chrome.storage.sync.get(["channels"], function (result) {
     const channels = result["channels"] ?? {};
     if (!(payload.detail.channelAlias in channels)) {
       channels[payload.detail.channelAlias] = payload.detail.channelName;
-      chrome.storage.local.set({ channels: channels });
+      chrome.storage.sync.set({ channels: channels });
     }
   });
 }
@@ -243,39 +243,39 @@ async function requestVideoInfoToPage() {
 }
 
 function deleteNoteFromVideoInStorage(payload) {
-  chrome.storage.local.get([payload.detail.videoId], function (result) {
+  chrome.storage.sync.get([payload.detail.videoId], function (result) {
     const notesInVideo = result[payload.detail.videoId] ?? {};
     delete notesInVideo[payload.detail.timestamp];
 
     if (Object.entries(notesInVideo).length === 0) {
-      chrome.storage.local.remove([payload.detail.videoId]);
+      chrome.storage.sync.remove([payload.detail.videoId]);
     }
   });
 }
 
 function cleanStorageOnDelete(payload) {
-  chrome.storage.local.get([payload.detail.videoId], function (result) {
+  chrome.storage.sync.get([payload.detail.videoId], function (result) {
     const notesInVideo = result[payload.detail.videoId] ?? {};
     delete notesInVideo[payload.detail.timestamp];
 
     if (Object.entries(notesInVideo).length === 0) {
-      chrome.storage.local.remove([payload.detail.videoId]);
+      chrome.storage.sync.remove([payload.detail.videoId]);
 
       const channelAlias = payload.detail.channelAlias;
-      chrome.storage.local.get([channelAlias], function (result) {
+      chrome.storage.sync.get([channelAlias], function (result) {
         const videosInChannel = result[channelAlias] ?? {};
         delete videosInChannel[payload.detail.videoId];
 
         if (Object.entries(videosInChannel).length == 0) {
-          chrome.storage.local.remove([channelAlias]);
+          chrome.storage.sync.remove([channelAlias]);
 
-          chrome.storage.local.get(["channels"], function (result) {
+          chrome.storage.sync.get(["channels"], function (result) {
             const channels = result["channels"] ?? {};
             delete channels[channelAlias];
-            chrome.storage.local.set({ channels });
+            chrome.storage.sync.set({ channels });
           });
         } else {
-          chrome.storage.local.set({ [channelAlias]: videosInChannel });
+          chrome.storage.sync.set({ [channelAlias]: videosInChannel });
         }
       });
     }

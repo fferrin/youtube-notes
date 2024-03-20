@@ -8,7 +8,7 @@ async function getCurrentTabUrl() {
 }
 
 async function getFromStorage(key) {
-  const value = await chrome.storage.local.get(key);
+  const value = await chrome.storage.sync.get(key);
   return value[key] ?? {};
 }
 
