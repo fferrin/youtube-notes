@@ -156,6 +156,10 @@ function saveNotesInLocalStorage(payload) {
 }
 
 function updateDOM(payload) {
+  // This function is called only on a YouTube video
+  document.querySelector("div.second-container").style.display = "block";
+  document.querySelector("div.third-container").style.display = "none";
+
   const { detail: data } = payload;
   window.localStorage.setItem("ytTitle", data.title);
   window.localStorage.setItem("ytUrl", data.videoUrl);

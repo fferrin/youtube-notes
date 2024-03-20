@@ -56,7 +56,7 @@ body {
 }
 
 .first-container,
-.third-container {
+.footer {
   margin: 0;
   padding: 0;
   forced-color-adjust: none;
@@ -97,6 +97,17 @@ body {
 }
 
 .second-container {
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  flex-grow: 1;
+  overflow: auto;
+  margin: 0;
+  display: none;
+}
+
+.third-container {
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
   padding-left: 1rem;
