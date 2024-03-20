@@ -78,6 +78,10 @@ While the current version of the extension meets my current requirements, I have
 
 6. **Backup Configuration**: Introduce the ability for users to configure storage services such as Google Drive, Dropbox, etc., to automatically back up their notes, ensuring data safety and accessibility across devices.
 
+7. **Internationalization Support**: Implement internationalization support to make the extension accessible and user-friendly for non-English speaking users by providing multilingual options for interface elements and content.
+
+8. **Tags**: Custom tags for videos and / or notes
+
 These planned enhancements aim to further improve the usability and versatility of the YouTube Notes extension, providing users with a seamless note-taking experience while watching YouTube videos.
 
 

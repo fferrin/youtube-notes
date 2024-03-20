@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "YouTube Notes",
-  "description": "Annotate YouTube videos and paste them into your preferred tool or keep them saved locally in your browser.",
-  "version": "1.1",
+  "description": "Take timestamped notes of YouTube videos directly in the browser.",
+  "version": "1.0",
   "icons": {
     "16": "images/icon-16.png",
     "32": "images/icon-32.png",
@@ -36,7 +36,6 @@
     }
   ],
   "permissions": [
-    "tabs",
     "activeTab",
     "storage"
   ],
